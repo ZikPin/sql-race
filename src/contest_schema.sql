@@ -56,15 +56,15 @@ CREATE TABLE course (
     credits       INTEGER NOT NULL,
     enrollment_id INTEGER NOT NULL,
     department_id INTEGER NOT NULL,
-    FOREIGN KEY (enrollment_id) REFERENCES enrollment(enrollment_id)
+    FOREIGN KEY (enrollment_id) REFERENCES enrollment(enrollment_id),
     FOREIGN KEY (department_id) REFERENCES department(department_id)
 );
 
 CREATE TABLE enrollment (
-    enrollment_id INTEGER PRIMARY KEY,
+    enrollment_id INTEGER NOT NULL PRIMARY KEY,
     semester      TEXT NOT NULL,
     grade         REAL,
-    student_id    INTEGER PRIMARY KEY,
+    student_id    INTEGER NOT NULL,
     FOREIGN KEY (student_id) REFERENCES student(student_id)
 );
 
@@ -75,7 +75,7 @@ CREATE TABLE submission (
     submitted_at    TEXT NOT NULL,
     submission_type TEXT NOT NULL,
     feedback        TEXT,
-    PRIMARY KEY (enrollment_id, submission_id)
+    PRIMARY KEY (enrollment_id, submission_id),
     FOREIGN KEY (enrollment_id) REFERENCES enrollment(enrollment_id)
 );
 
