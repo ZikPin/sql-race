@@ -22,6 +22,13 @@ CREATE TABLE room (
     building      TEXT NOT NULL
 );
 
+CREATE TABLE office_hours (
+    day_of_week TEXT NOT NULL,
+    start_time  TEXT NOT NULL,
+    end_time    TEXT NOT NULL,
+    PRIMARY KEY (day_of_week, start_time, end_time)
+);
+
 CREATE TABLE department (
     department_id   INTEGER PRIMARY KEY,
     name            TEXT NOT NULL,
@@ -49,6 +56,14 @@ CREATE TABLE professor (
     FOREIGN KEY (department_id) REFERENCES department(department_id)
 );
 
+CREATE TABLE enrollment (
+    enrollment_id INTEGER NOT NULL PRIMARY KEY,
+    semester      TEXT NOT NULL,
+    grade         REAL,
+    student_id    INTEGER NOT NULL,
+    FOREIGN KEY (student_id) REFERENCES student(student_id)
+);
+
 CREATE TABLE course (
     course_id     INTEGER PRIMARY KEY,
     title         TEXT NOT NULL,
@@ -58,14 +73,6 @@ CREATE TABLE course (
     department_id INTEGER NOT NULL,
     FOREIGN KEY (enrollment_id) REFERENCES enrollment(enrollment_id),
     FOREIGN KEY (department_id) REFERENCES department(department_id)
-);
-
-CREATE TABLE enrollment (
-    enrollment_id INTEGER NOT NULL PRIMARY KEY,
-    semester      TEXT NOT NULL,
-    grade         REAL,
-    student_id    INTEGER NOT NULL,
-    FOREIGN KEY (student_id) REFERENCES student(student_id)
 );
 
 CREATE TABLE submission (
@@ -79,12 +86,6 @@ CREATE TABLE submission (
     FOREIGN KEY (enrollment_id) REFERENCES enrollment(enrollment_id)
 );
 
-CREATE TABLE office_hours (
-    day_of_week TEXT NOT NULL,
-    start_time  TEXT NOT NULL,
-    end_time    TEXT NOT NULL,
-    PRIMARY KEY (day_of_week, start_time, end_time)
-);
 
 CREATE TABLE professor_has_office_hours (
     professor_id INTEGER NOT NULL,
