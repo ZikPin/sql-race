@@ -39,7 +39,7 @@ def init_app_db():
 
 
 @click.command('init-db:app')
-def init_db_command():
+def init_app_db_command():
     """Clear the existing data and create new tables."""
     init_app_db()
     click.echo('Initialized the app database.')
@@ -65,7 +65,7 @@ def init_contest_db_command():
 
 
 @click.command('init-db')
-def init_db():
+def init_db_command():
     """Clear the existing data and create new tables for both databases."""
     init_app_db()
     click.echo('Initialized the app database.')
@@ -76,8 +76,9 @@ def init_db():
 
 def init_app(app):
     app.teardown_appcontext(close_db)
-    app.cli.add_command(init_db_command)
+    app.cli.add_command(init_app_db_command)
     app.cli.add_command(init_contest_db_command)
+    app.cli.add_command(init_db_command)
 
 
 sqlite3.register_converter(
