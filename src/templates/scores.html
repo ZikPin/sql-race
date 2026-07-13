@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SQL Race – Scoreboard</title>
+</head>
+<body>
+    <h1>Scoreboard</h1>
+    <p>Auto-refreshes every 5 seconds.</p>
+
+    <table id="scoreboard" border="1">
+        <thead>
+            <tr id="header-row">
+                <th>Team</th>
+                <th>Total Score</th>
+            </tr>
+        </thead>
+        <tbody id="scoreboard-body">
+        </tbody>
+    </table>
+
+    <script>
+        async function fetchScores() {
+            const response = await fetch('/admin/scores/data');
+            const data = await response.json();
+
+            // build header dynamically from questions
+            const headerRow = document.getElementById('header-row');
+            headerRow.innerHTML = '<th>Team</th><th>Total Score</th>';
+            data.questions.forEach(q => {
+                const th = document.createElement('th');
+                th.textContent = `Q${q.id} (${q.score}pt)`;
+                headerRow.appendChild(th);
+            });
+
+            // build rows
+            const tbody = document.getElementById('scoreboard-body');
+            tbody.innerHTML = '';
+            data.scoreboard.forEach((team, index) => {
+                const tr = document.createElement('tr');
+
+                const rankCell = document.createElement('td');
+                rankCell.textContent = `${index + 1}. ${team.team_name}`;
+                tr.appendChild(rankCell);
+
+                const scoreCell = document.createElement('td');
+                scoreCell.textContent = team.total_score;
+                tr.appendChild(scoreCell);
+
+                data.questions.forEach(q => {
+                    const td = document.createElement('td');
+                    td.textContent = team.solved.includes(q.id) ? '✅' : '';
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        fetchScores();
+        setInterval(fetchScores, 5000);
+    </script>
+</body>
+</html>

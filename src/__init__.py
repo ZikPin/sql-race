@@ -8,6 +8,7 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY='dev',
+        ADMIN_PASSWORD=os.environ.get('ADMIN_PASSWORD', 'admin'),
         APP_DATABASE=os.path.join(app.instance_path, 'app.db'),
         CONTEST_DATABASE=os.path.join(app.instance_path, 'contest.db')
     )
@@ -29,5 +30,10 @@ def create_app(test_config=None):
 
     from . import db
     db.init_app(app)
+
+    from . import auth, contest, admin
+    app.register_blueprint(auth.bp)
+    app.register_blueprint(contest.bp)
+    app.register_blueprint(admin.bp)
 
     return app

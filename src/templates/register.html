@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SQL Race – Register</title>
+</head>
+<body>
+    <h1>SQL Race</h1>
+    <h2>Enter your team name to begin</h2>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <p style="color: red;">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="/register">
+        <input
+            type="text"
+            name="team_name"
+            placeholder="Team name"
+            required
+            autofocus
+        />
+        <button type="submit">Join Competition</button>
+    </form>
+</body>
+</html>

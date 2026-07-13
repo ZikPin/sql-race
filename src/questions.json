@@ -1,0 +1,8 @@
+[
+    {
+        "id": 1,
+        "question": "Find the names of all students enrolled in more than 3 courses.",
+        "score": 2,
+        "answer_query": "SELECT s.first_name, s.last_name FROM student s JOIN enrollment e ON s.student_id = e.student_id GROUP BY s.student_id HAVING COUNT(e.course_id) > 3"
+    }
+]

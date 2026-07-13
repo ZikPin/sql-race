@@ -1,16 +1,17 @@
 DROP TABLE IF EXISTS team;
 DROP TABLE IF EXISTS submission;
 
-CREATE TABLE IF NOT EXISTS Team (
+CREATE TABLE IF NOT EXISTS team (
     team_id   INTEGER PRIMARY KEY AUTOINCREMENT,
-    team_name TEXT NOT NULL UNIQUE
+    team_name TEXT NOT NULL UNIQUE,
+    joined_at TEXT NOT NULL
 );
-        
-CREATE TABLE IF NOT EXISTS Submission (
+
+CREATE TABLE IF NOT EXISTS submission (
     submission_id INTEGER PRIMARY KEY AUTOINCREMENT,
     team_id       INTEGER NOT NULL,
     question_id   INTEGER NOT NULL,
     submitted_sql TEXT NOT NULL,
-    is_correct    INTEGER NOT NULL DEFAULT 0,
-    FOREIGN KEY (team_id) REFERENCES Team(team_id)
+    submitted_at  TEXT NOT NULL,
+    FOREIGN KEY (team_id) REFERENCES team(team_id)
 );

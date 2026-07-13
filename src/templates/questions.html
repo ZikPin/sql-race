@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SQL Race – Questions</title>
+</head>
+<body>
+    <h1>SQL Race</h1>
+    <p>Team: <strong>{{ team_name }}</strong> — Score: <strong>{{ total_score }}</strong></p>
+
+    {% for question in questions %}
+    <div id="question-{{ question.id }}">
+        <h3>
+            Q{{ question.id }} — {{ question.score }} pts
+            {% if question.id in solved_ids %} ✅ {% endif %}
+        </h3>
+        <p>{{ question.question }}</p>
+
+        {% if question.id not in solved_ids %}
+        <textarea
+            id="sql-{{ question.id }}"
+            rows="5"
+            cols="60"
+            placeholder="Write your SQL here..."
+        ></textarea>
+        <br>
+        <button onclick="submitQuery({{ question.id }})">Submit</button>
+        <p id="feedback-{{ question.id }}"></p>
+        {% else %}
+        <p>✅ Solved</p>
+        {% endif %}
+    </div>
+    <hr>
+    {% endfor %}
+
+    <script>
+        async function submitQuery(questionId) {
+            const sql = document.getElementById(`sql-${questionId}`).value;
+            const feedback = document.getElementById(`feedback-${questionId}`);
+
+            const formData = new FormData();
+            formData.append('question_id', questionId);
+            formData.append('sql', sql);
+
+            const response = await fetch('/submit', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.correct) {
+                feedback.style.color = 'green';
+                feedback.textContent = `✅ ${data.message} (+${data.score} pts)`;
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                feedback.style.color = 'red';
+                feedback.textContent = `❌ ${data.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
