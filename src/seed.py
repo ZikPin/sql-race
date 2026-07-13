@@ -3,91 +3,87 @@ import faker as fake
 import random
 
 
-def seed_rooms(conn, n=100) -> list[int]:
+# SEEDING ROOMS
+def seed_rooms(conn, n=50) -> list[int]:
+    buildings = [f"{random.choice(['S', 'L'])}{random.randint(1,3)}{random.randint(0,9)}{random.randint(0,9)}" 
+                 for i in range(20)]
+    
     rooms = []
     for i in range(1, n + 1):
         rooms.append((
-            i,                                    # room_id
-            fake.random_int(20, 200),             # capacity
-            random.choice([0, 1]),                # has_projector
-            fake.random_element(['S1', 'S2', 'S3', 'HMZ', 'Piloty'])  # building
+            i,                          # room_id
+            random.choice([0, 1]),      # has_projector
+            random.randint(20, 200),    # capacity
+            random.choice(buildings),   # building e.g. S101, L203
+            random.randint(1, 50)       # room_number
         ))
     
     conn.executemany(
-        "INSERT INTO room VALUES (?, ?, ?, ?)",
+        "INSERT INTO room (room_id, has_projector, capacity, building, room_number) VALUES (?, ?, ?, ?, ?)",
         rooms
     )
     
-    return [r[0] for r in rooms]  # return just the IDs → [1, 2, 3, ..., 20]
+    return [r[0] for r in rooms]
 
 
-# TODO fix departments seeding (more than 3 departments)
-def seed_departments(conn, room_ids, n=20) -> list[int]:
-    departments = []
-    for i in range(1, n + 1):
-        departments.append((
-            i,                                              # department_id
-            fake.random_element(['Informatik', 'Mathematik', 'Physik']),  # name
-            fake.random_element(['FB 18', 'FB 04', 'FB 05']),             # faculty
-            random.choice(room_ids)                         # office_location — must be a real room_id
-        ))
-    
+# SEEDING OFFICE_HOURS
+def seed_office_hours(conn) -> list[int]:
+    days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+    slots = [
+        ('08:00', '09:30'),
+        ('09:30', '11:00'),
+        ('11:00', '12:30'),
+        ('12:30', '14:00'),
+        ('14:00', '15:30'),
+        ('15:30', '17:00'),
+    ]
+
+    office_hours = []
+    i = 1
+    for day in days:
+        for start, end in slots:
+            office_hours.append((i, day, start, end))
+            i += 1
+
     conn.executemany(
-        "INSERT INTO department VALUES (?, ?, ?, ?)",
+        "INSERT INTO office_hours (office_hour_id, day_of_week, start_time, end_time) VALUES (?, ?, ?, ?)",
+        office_hours
+    )
+
+    return [oh[0] for oh in office_hours]
+
+
+# SEEDING DEPARTMENTS
+def seed_departments(conn, room_ids: list[int]) -> list[int]:
+    departments_raw = [
+        (1,  "Rechts- und Wirtschaftswissenschaften"),
+        (2,  "Gesellschafts- und Geschichtswissenschaften"),
+        (3,  "Humanwissenschaften"),
+        (4,  "Mathematik"),
+        (5,  "Physik"),
+        (7,  "Chemie"),
+        (10, "Biologie"),
+        (11, "Material- und Geowissenschaften"),
+        (13, "Bau- und Umweltingenieurwissenschaften"),
+        (15, "Architektur"),
+        (16, "Maschinenbau"),
+        (18, "Elektrotechnik und Informationstechnik"),
+        (20, "Informatik"),
+    ]
+
+    assigned_rooms = random.sample(room_ids, len(departments_raw))
+
+    departments = [
+        (dept_id, name, room)
+        for (dept_id, name), room in zip(departments_raw, assigned_rooms)
+    ]
+
+    conn.executemany(
+        "INSERT INTO department (department_id, name, office_location) VALUES (?, ?, ?)",
         departments
     )
-    
+
     return [d[0] for d in departments]
-
-
-# TODO make sure the number is appropriate
-def seed_office_hourse(conn, n=200) -> list[int]:
-    ...
-
-
-def seed_students(conn, department_ids, n=400) -> list[int]:
-    ...
-
-
-def seed_professors(conn, department_ids, n=90) -> list[int]:
-    ...
-
-
-# TODO make sure the number is appropriate
-def seed_enrollments(conn, student_ids, n=1000) -> list[int]:
-    ...
-
-
-# TODO make sure the number is appropriate
-def seed_courses(conn, department_ids, enrollment_ids, n=200) -> list[int]:
-    ...
-
-
-# TODO make sure the number is appropriate
-def seed_submissions(conn, enrollment_ids, n=200) -> list[int]:
-    ...
-
-
-# TODO make sure the number is appropriate
-# Some 60 Profs have 2 times a week, 30 will have 1 times a week
-def seed_professor_office_hours(conn, professor_ids, office_hours_ids, room_ids, n=150) -> list[int]:
-    ...
-
-
-# TODO make sure the number is appropriate
-def seed_class_sessions(conn, professor_ids, course_ids, room_ids, n=200) -> list[int]:
-    ...
-
-
-# TODO make sure the number is appropriate
-def seed_professor_teaches_courses(conn, professor_ids, course_ids, n=200) -> list[int]:
-    ...
-
-
-# TODO make sure the number is appropriate
-def seed_course_prerequisites(conn, course_ids, prerequisite_ids, n=200) -> list[int]:
-    ...
-
 
 # then at the bottom:
 if __name__ == "__main__":
@@ -95,9 +91,6 @@ if __name__ == "__main__":
     conn.execute("PRAGMA foreign_keys = ON")
     
     room_ids = seed_rooms(conn)
-    department_ids = seed_departments(conn, room_ids)
-    student_ids = seed_students(conn, department_ids)
-    ...
     
     conn.commit()
     conn.close()

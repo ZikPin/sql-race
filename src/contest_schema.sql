@@ -19,20 +19,20 @@ CREATE TABLE room (
     room_id       INTEGER PRIMARY KEY,
     has_projector INTEGER NOT NULL,
     capacity      INTEGER NOT NULL,
-    building      TEXT NOT NULL
+    building      TEXT NOT NULL,
+    room_number   INTEGER NOT NULL
 );
 
 CREATE TABLE office_hours (
-    day_of_week TEXT NOT NULL,
-    start_time  TEXT NOT NULL,
-    end_time    TEXT NOT NULL,
-    PRIMARY KEY (day_of_week, start_time, end_time)
+    office_hour_id INTEGER PRIMARY KEY,
+    day_of_week    TEXT NOT NULL,
+    start_time     TEXT NOT NULL,
+    end_time       TEXT NOT NULL,
 );
 
 CREATE TABLE department (
     department_id   INTEGER PRIMARY KEY,
     name            TEXT NOT NULL,
-    faculty         TEXT NOT NULL,
     office_location INTEGER NOT NULL,
     FOREIGN KEY (office_location) REFERENCES room(room_id)
 );
