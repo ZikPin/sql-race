@@ -27,7 +27,7 @@ CREATE TABLE office_hours (
     office_hour_id INTEGER PRIMARY KEY,
     day_of_week    TEXT NOT NULL,
     start_time     TEXT NOT NULL,
-    end_time       TEXT NOT NULL,
+    end_time       TEXT NOT NULL
 );
 
 CREATE TABLE department (
@@ -104,7 +104,7 @@ CREATE TABLE class_session (
     office_hour_id   INTEGER NOT NULL,
     room_id          INTEGER NOT NULL,
     type             TEXT NOT NULL,
-    PRIMARY KEY (professor_id, course_id, office_hour_id, type)
+    PRIMARY KEY (professor_id, course_id, office_hour_id, type),
     FOREIGN KEY (professor_id) REFERENCES professor(professor_id),
     FOREIGN KEY (course_id) REFERENCES course(course_id),
     FOREIGN KEY (room_id) REFERENCES room(room_id)

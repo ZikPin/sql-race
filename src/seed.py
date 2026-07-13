@@ -137,7 +137,7 @@ def seed_professors(conn, department_ids: list[int], n=50) -> list[int]:
         ))
 
     conn.executemany(
-        "INSERT INTO professor (professor_id, hire_date, email, first_name, last_name, department_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO professor (professor_id, hire_date, email, first_name, last_name, department_id) VALUES (?, ?, ?, ?, ?, ?)",
         professors
     )
 
@@ -376,8 +376,11 @@ def seed_course_has_prerequisites(conn, course_ids: list[int]) -> None:
 if __name__ == "__main__":
     import os
 
-    db_path = os.path.join(os.path.dirname(__file__), 'competition.db')
-    schema_path = os.path.join(os.path.dirname(__file__), 'contest_schema.sql')
+    base_dir = os.path.dirname(__file__)  # this is src/
+    instance_dir = os.path.join(base_dir, '..', 'instance')
+
+    db_path = os.path.join(instance_dir, 'contest.db')
+    schema_path = os.path.join(base_dir, 'contest_schema.sql')
 
     conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA foreign_keys = ON")
