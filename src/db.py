@@ -52,6 +52,10 @@ def init_contest_db():
     with current_app.open_resource('contest_schema.sql') as f:
         db.executescript(f.read().decode('utf8'))
 
+    from . import seed
+    seed.seed()
+    click.echo('Datatable seeding is complete')
+
 
 @click.command('init-db:contest')
 def init_contest_db_command():
@@ -59,9 +63,15 @@ def init_contest_db_command():
     init_contest_db()
     click.echo('Initialized the contest database.')
 
-    from . import seed
-    seed.seed()
-    click.echo('Datatable seeding is complete')
+
+@click.command('init-db')
+def init_db():
+    """Clear the existing data and create new tables for both databases."""
+    init_app_db()
+    click.echo('Initialized the app database.')
+    
+    init_contest_db()
+    click.echo('Initialized the contest database.')
 
 
 def init_app(app):
