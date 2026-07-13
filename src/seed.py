@@ -372,8 +372,7 @@ def seed_course_has_prerequisites(conn, course_ids: list[int]) -> None:
     )
 
 
-# then at the bottom:
-if __name__ == "__main__":
+def seed():
     import os
 
     base_dir = os.path.dirname(__file__)  # this is src/
@@ -429,4 +428,10 @@ if __name__ == "__main__":
 
     conn.commit()
     conn.close()
-    print("Done. competition.db is ready.")
+    print("Done. contest.db is ready.")
+
+
+
+# then at the bottom:
+if __name__ == "__main__":
+    seed()

@@ -1,8 +1,107 @@
 [
     {
         "id": 1,
-        "question": "Find the names of all students enrolled in more than 3 courses.",
+        "difficulty": "easy",
+        "score": 1,
+        "question": "Find the first name, last name and email of all students.",
+        "answer_query": "SELECT first_name, last_name, email FROM student"
+    },
+    {
+        "id": 2,
+        "difficulty": "easy",
+        "score": 1,
+        "question": "Find the titles of all Master level courses.",
+        "answer_query": "SELECT title FROM course WHERE level = 'Master'"
+    },
+    {
+        "id": 3,
+        "difficulty": "easy",
+        "score": 1,
+        "question": "Find the first name, last name and hire date of all professors, ordered by hire date from oldest to newest.",
+        "answer_query": "SELECT first_name, last_name, hire_date FROM professor ORDER BY hire_date ASC"
+    },
+    {
+        "id": 4,
+        "difficulty": "easy",
+        "score": 1,
+        "question": "Find all rooms that have a projector and a capacity greater than 50. Return the building, room number and capacity.",
+        "answer_query": "SELECT building, room_number, capacity FROM room WHERE has_projector = 1 AND capacity > 50"
+    },
+    {
+        "id": 5,
+        "difficulty": "easy",
+        "score": 1,
+        "question": "Count how many students belong to each department. Return the department_id and the count, ordered by count descending.",
+        "answer_query": "SELECT department_id, COUNT(*) as student_count FROM student GROUP BY department_id ORDER BY student_count DESC"
+    },
+    {
+        "id": 6,
+        "difficulty": "easy",
+        "score": 1,
+        "question": "Find all enrollments where the grade is lower than 2.0. Return the enrollment_id, student_id and grade.",
+        "answer_query": "SELECT enrollment_id, student_id, grade FROM enrollment WHERE grade < 2.0"
+    },
+    {
+        "id": 7,
+        "difficulty": "easy",
+        "score": 1,
+        "question": "Find all submissions of type 'programming_task' that have a grade. Return enrollment_id, grade and submitted_at.",
+        "answer_query": "SELECT enrollment_id, grade, submitted_at FROM submission WHERE submission_type = 'programming_task' AND grade IS NOT NULL"
+    },
+    {
+        "id": 8,
+        "difficulty": "easy",
+        "score": 1,
+        "question": "Find the name and credits of all courses with more than 10 credits, ordered by credits descending.",
+        "answer_query": "SELECT title, credits FROM course WHERE credits > 10 ORDER BY credits DESC"
+    },
+    {
+        "id": 9,
+        "difficulty": "easy",
+        "score": 1,
+        "question": "Find all office hours that take place on Monday. Return the office_hour_id, start_time and end_time.",
+        "answer_query": "SELECT office_hour_id, start_time, end_time FROM office_hours WHERE day_of_week = 'Mon'"
+    },
+    {
+        "id": 10,
+        "difficulty": "easy",
+        "score": 1,
+        "question": "Find the first name, last name of each student along with the name of their department.",
+        "answer_query": "SELECT s.first_name, s.last_name, d.name FROM student s JOIN department d ON s.department_id = d.department_id"
+    },
+    {
+        "id": 11,
+        "difficulty": "medium",
         "score": 2,
-        "answer_query": "SELECT s.first_name, s.last_name FROM student s JOIN enrollment e ON s.student_id = e.student_id GROUP BY s.student_id HAVING COUNT(e.course_id) > 3"
+        "question": "Find all students who are enrolled in more than 5 courses. Return their first name, last name and the number of courses they are enrolled in.",
+        "answer_query": "SELECT s.first_name, s.last_name, COUNT(e.course_id) as course_count FROM student s JOIN enrollment e ON s.student_id = e.student_id GROUP BY s.student_id HAVING COUNT(e.course_id) > 5"
+    },
+    {
+        "id": 12,
+        "difficulty": "medium",
+        "score": 2,
+        "question": "Find the average grade per department for all enrollments where a grade was given. Return the department name and the average grade rounded to 2 decimal places, ordered by average grade ascending.",
+        "answer_query": "SELECT d.name, ROUND(AVG(e.grade), 2) as avg_grade FROM enrollment e JOIN student s ON e.student_id = s.student_id JOIN department d ON s.department_id = d.department_id WHERE e.grade IS NOT NULL GROUP BY d.department_id ORDER BY avg_grade ASC"
+    },
+    {
+        "id": 13,
+        "difficulty": "medium",
+        "score": 2,
+        "question": "Find all professors who hold office hours in a room with a projector. Return their first name, last name and the room's building and room number. Avoid duplicate rows.",
+        "answer_query": "SELECT DISTINCT p.first_name, p.last_name, r.building, r.room_number FROM professor p JOIN professor_has_office_hours pho ON p.professor_id = pho.professor_id JOIN room r ON pho.room_id = r.room_id WHERE r.has_projector = 1"
+    },
+    {
+        "id": 14,
+        "difficulty": "medium",
+        "score": 2,
+        "question": "For each course, find the number of students enrolled and the average grade. Only include courses with at least 3 enrollments. Return the course title, enrollment count and average grade rounded to 2 decimal places.",
+        "answer_query": "SELECT c.title, COUNT(e.student_id) as enrollment_count, ROUND(AVG(e.grade), 2) as avg_grade FROM course c JOIN enrollment e ON c.course_id = e.course_id GROUP BY c.course_id HAVING COUNT(e.student_id) >= 3"
+    },
+    {
+        "id": 15,
+        "difficulty": "medium",
+        "score": 2,
+        "question": "Find all students who have at least one submission with a grade lower than 2.0. Return their first name, last name and email. Avoid duplicates.",
+        "answer_query": "SELECT DISTINCT s.first_name, s.last_name, s.email FROM student s JOIN enrollment e ON s.student_id = e.student_id JOIN submission sub ON e.enrollment_id = sub.enrollment_id WHERE sub.grade < 2.0"
     }
 ]

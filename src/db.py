@@ -12,6 +12,7 @@ def get_contest_db():
         g.contest_db.row_factory = sqlite3.Row
     return g.contest_db
 
+
 def get_app_db():
     if 'app_db' not in g:
         g.app_db = sqlite3.connect(current_app.config['APP_DATABASE'])
@@ -57,6 +58,10 @@ def init_contest_db_command():
     """Clear the existing data and create new tables for the contest."""
     init_contest_db()
     click.echo('Initialized the contest database.')
+
+    from . import seed
+    seed.seed()
+    click.echo('Datatable seeding is complete')
 
 
 def init_app(app):

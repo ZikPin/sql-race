@@ -1,63 +1,79 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>SQL Race – Questions</title>
-</head>
-<body>
-    <h1>SQL Race</h1>
-    <p>Team: <strong>{{ team_name }}</strong> — Score: <strong>{{ total_score }}</strong></p>
+{% extends 'base.html' %}
 
-    {% for question in questions %}
-    <div id="question-{{ question.id }}">
-        <h3>
-            Q{{ question.id }} — {{ question.score }} pts
-            {% if question.id in solved_ids %} ✅ {% endif %}
-        </h3>
-        <p>{{ question.question }}</p>
+{% block title %}SQL Race – Questions{% endblock %}
 
-        {% if question.id not in solved_ids %}
-        <textarea
-            id="sql-{{ question.id }}"
-            rows="5"
-            cols="60"
-            placeholder="Write your SQL here..."
-        ></textarea>
-        <br>
-        <button onclick="submitQuery({{ question.id }})">Submit</button>
-        <p id="feedback-{{ question.id }}"></p>
-        {% else %}
-        <p>✅ Solved</p>
-        {% endif %}
+{% block content %}
+<div class="questions-layout">
+    <aside class="sidebar">
+        <p class="sidebar-label">Questions</p>
+        {% for question in questions %}
+        <a href="#question-{{ question.id }}" class="sidebar-item {% if question.id in solved_ids %}solved{% endif %}">
+            <span>Q{{ question.id }}</span>
+            <span class="sidebar-score">{{ question.score }}pt</span>
+            {% if question.id in solved_ids %}<span class="check">✓</span>{% endif %}
+        </a>
+        {% endfor %}
+    </aside>
+
+    <div class="questions-list">
+        {% for question in questions %}
+        <div class="question-card" id="question-{{ question.id }}">
+            <div class="question-header">
+                <span class="question-number">Q{{ question.id }}</span>
+                <span class="question-score accent">{{ question.score }} pts</span>
+                {% if question.id in solved_ids %}
+                <span class="badge-solved">Solved ✓</span>
+                {% endif %}
+            </div>
+            <p class="question-text">{{ question.question }}</p>
+
+            {% if question.id not in solved_ids %}
+            <textarea
+                id="sql-{{ question.id }}"
+                class="sql-input"
+                rows="5"
+                placeholder="SELECT ..."
+                spellcheck="false"
+            ></textarea>
+            <div class="question-actions">
+                <button class="btn" onclick="submitQuery({{ question.id }})">Run Query →</button>
+                <span id="feedback-{{ question.id }}" class="feedback"></span>
+            </div>
+            {% else %}
+            <p class="solved-label">✓ Correct answer submitted</p>
+            {% endif %}
+        </div>
+        {% endfor %}
     </div>
-    <hr>
-    {% endfor %}
+</div>
 
-    <script>
-        async function submitQuery(questionId) {
-            const sql = document.getElementById(`sql-${questionId}`).value;
-            const feedback = document.getElementById(`feedback-${questionId}`);
+<script>
+    async function submitQuery(questionId) {
+        const sql = document.getElementById(`sql-${questionId}`).value;
+        const feedback = document.getElementById(`feedback-${questionId}`);
 
-            const formData = new FormData();
-            formData.append('question_id', questionId);
-            formData.append('sql', sql);
+        feedback.textContent = 'Checking...';
+        feedback.className = 'feedback';
 
-            const response = await fetch('/submit', {
-                method: 'POST',
-                body: formData
-            });
+        const formData = new FormData();
+        formData.append('question_id', questionId);
+        formData.append('sql', sql);
 
-            const data = await response.json();
+        const response = await fetch('/submit', {
+            method: 'POST',
+            body: formData
+        });
 
-            if (data.correct) {
-                feedback.style.color = 'green';
-                feedback.textContent = `✅ ${data.message} (+${data.score} pts)`;
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                feedback.style.color = 'red';
-                feedback.textContent = `❌ ${data.message}`;
-            }
+        const data = await response.json();
+
+        if (data.correct) {
+            feedback.textContent = `✓ ${data.message} (+${data.score} pts)`;
+            feedback.classList.add('feedback-correct');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            feedback.textContent = `✗ ${data.message}`;
+            feedback.classList.add('feedback-wrong');
         }
-    </script>
-</body>
-</html>
+    }
+</script>
+{% endblock %}

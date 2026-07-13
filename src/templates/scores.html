@@ -1,64 +1,56 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>SQL Race – Scoreboard</title>
-</head>
-<body>
-    <h1>Scoreboard</h1>
-    <p>Auto-refreshes every 5 seconds.</p>
+{% extends 'base.html' %}
 
-    <table id="scoreboard" border="1">
+{% block title %}SQL Race – Scoreboard{% endblock %}
+
+{% block content %}
+<div class="scoreboard-wrap">
+    <div class="scoreboard-header">
+        <h1 class="card-title">Live <span class="accent">Scoreboard</span></h1>
+        <span class="refresh-label">Refreshes every 5s</span>
+    </div>
+
+    <table class="scoreboard-table" id="scoreboard">
         <thead>
             <tr id="header-row">
                 <th>Team</th>
-                <th>Total Score</th>
+                <th>Score</th>
             </tr>
         </thead>
-        <tbody id="scoreboard-body">
-        </tbody>
+        <tbody id="scoreboard-body"></tbody>
     </table>
+</div>
 
-    <script>
-        async function fetchScores() {
-            const response = await fetch('/admin/scores/data');
-            const data = await response.json();
+<script>
+    async function fetchScores() {
+        const response = await fetch('/admin/scores/data');
+        const data = await response.json();
 
-            // build header dynamically from questions
-            const headerRow = document.getElementById('header-row');
-            headerRow.innerHTML = '<th>Team</th><th>Total Score</th>';
-            data.questions.forEach(q => {
-                const th = document.createElement('th');
-                th.textContent = `Q${q.id} (${q.score}pt)`;
-                headerRow.appendChild(th);
-            });
+        const headerRow = document.getElementById('header-row');
+        headerRow.innerHTML = '<th>Team</th><th>Score</th>';
+        data.questions.forEach(q => {
+            const th = document.createElement('th');
+            th.textContent = `Q${q.id}`;
+            headerRow.appendChild(th);
+        });
 
-            // build rows
-            const tbody = document.getElementById('scoreboard-body');
-            tbody.innerHTML = '';
-            data.scoreboard.forEach((team, index) => {
-                const tr = document.createElement('tr');
+        const tbody = document.getElementById('scoreboard-body');
+        tbody.innerHTML = '';
+        data.scoreboard.forEach((team, index) => {
+            const tr = document.createElement('tr');
+            if (index === 0) tr.classList.add('first-place');
 
-                const rankCell = document.createElement('td');
-                rankCell.textContent = `${index + 1}. ${team.team_name}`;
-                tr.appendChild(rankCell);
+            tr.innerHTML = `
+                <td class="team-name">${index + 1}. ${team.team_name}</td>
+                <td class="team-score accent">${team.total_score}</td>
+                ${data.questions.map(q =>
+                    `<td class="${team.solved.includes(q.id) ? 'solved-cell' : ''}">${team.solved.includes(q.id) ? '✓' : ''}</td>`
+                ).join('')}
+            `;
+            tbody.appendChild(tr);
+        });
+    }
 
-                const scoreCell = document.createElement('td');
-                scoreCell.textContent = team.total_score;
-                tr.appendChild(scoreCell);
-
-                data.questions.forEach(q => {
-                    const td = document.createElement('td');
-                    td.textContent = team.solved.includes(q.id) ? '✅' : '';
-                    tr.appendChild(td);
-                });
-
-                tbody.appendChild(tr);
-            });
-        }
-
-        fetchScores();
-        setInterval(fetchScores, 5000);
-    </script>
-</body>
-</html>
+    fetchScores();
+    setInterval(fetchScores, 5000);
+</script>
+{% endblock %}
