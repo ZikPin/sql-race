@@ -277,14 +277,153 @@ def seed_professor_has_office_hours(conn, professor_ids: list[int], office_hour_
         assignments
     )
 
+
+# SEEDING PROFESSOR TEACHES COURSES
+def seed_professor_teaches_course(conn, professor_ids: list[int], course_ids: list[int]) -> None:
+    assignments = []
+    seen = set()
+
+    for course_id in course_ids:
+        available = list(professor_ids)
+
+        # assign exactly one lecturer
+        lecturer = random.choice(available)
+        seen.add((lecturer, course_id))
+        assignments.append((lecturer, course_id))
+        available.remove(lecturer)
+
+        # assign 1-3 assistants
+        n_assistants = random.randint(1, 3)
+        assistants = random.sample(available, min(n_assistants, len(available)))
+        for professor_id in assistants:
+            if (professor_id, course_id) not in seen:
+                seen.add((professor_id, course_id))
+                assignments.append((professor_id, course_id))
+
+    conn.executemany(
+        "INSERT INTO professor_teaches_course (professor_id, course_id) VALUES (?, ?)",
+        assignments
+    )
+
+
+# SEEDING CLASS SESSIONS
+def seed_class_sessions(conn, office_hour_ids: list[int], room_ids: list[int]) -> None:
+    session_types = ['Lecture', 'Übungsgruppe']
+    assignments = []
+    seen = set()
+
+    # fetch existing professor-course pairs from DB
+    pairs = conn.execute(
+        "SELECT professor_id, course_id FROM professor_teaches_course"
+    ).fetchall()
+
+    for professor_id, course_id in pairs:
+        # always one lecture
+        office_hour_id = random.choice(office_hour_ids)
+        key = (professor_id, course_id, office_hour_id, 'Lecture')
+        if key not in seen:
+            seen.add(key)
+            assignments.append((professor_id, course_id, office_hour_id, random.choice(room_ids), 'Lecture'))
+
+        # 50% chance of second lecture at different time
+        if random.random() > 0.5:
+            office_hour_id = random.choice(office_hour_ids)
+            key = (professor_id, course_id, office_hour_id, 'Lecture')
+            if key not in seen:
+                seen.add(key)
+                assignments.append((professor_id, course_id, office_hour_id, random.choice(room_ids), 'Lecture'))
+
+        # 1-2 practice sessions
+        n_practice = random.randint(1, 2)
+        for _ in range(n_practice):
+            office_hour_id = random.choice(office_hour_ids)
+            key = (professor_id, course_id, office_hour_id, 'Übungsgruppe')
+            if key not in seen:
+                seen.add(key)
+                assignments.append((professor_id, course_id, office_hour_id, random.choice(room_ids), 'Übungsgruppe'))
+
+    conn.executemany(
+        "INSERT INTO class_session (professor_id, course_id, office_hour_id, room_id, type) VALUES (?, ?, ?, ?, ?)",
+        assignments
+    )
+
+
+# SEEDING PREREQUISITES
+def seed_course_has_prerequisites(conn, course_ids: list[int]) -> None:
+    prerequisites = []
+    seen = set()
+
+    for course_id in course_ids:
+        # 60% chance a course has any prerequisites
+        if random.random() > 0.4:
+            n_prerequisites = random.randint(1, 3)
+            available = [c for c in course_ids if c != course_id]
+            chosen = random.sample(available, min(n_prerequisites, len(available)))
+
+            for prerequisite_id in chosen:
+                key = (course_id, prerequisite_id)
+                if key not in seen:
+                    seen.add(key)
+                    prerequisites.append((course_id, prerequisite_id))
+
+    conn.executemany(
+        "INSERT INTO course_has_prerequisites (course_id, prerequisite_id) VALUES (?, ?)",
+        prerequisites
+    )
+
+
 # then at the bottom:
 if __name__ == "__main__":
-    conn = sqlite3.connect("competition.db")
+    import os
+
+    db_path = os.path.join(os.path.dirname(__file__), 'competition.db')
+    schema_path = os.path.join(os.path.dirname(__file__), 'contest_schema.sql')
+
+    conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA foreign_keys = ON")
-    
-    room_ids = seed_rooms(conn)
+
+    # apply schema
+    with open(schema_path, 'r') as f:
+        conn.executescript(f.read())
+
+    print("Schema applied.")
+
+    room_ids = seed_rooms(conn, n=30)
+    print(f"Seeded {len(room_ids)} rooms.")
+
     office_hour_ids = seed_office_hours(conn)
+    print(f"Seeded {len(office_hour_ids)} office hours.")
+
     department_ids = seed_departments(conn, room_ids)
-    
+    print(f"Seeded {len(department_ids)} departments.")
+
+    student_ids = seed_students(conn, department_ids, n=500)
+    print(f"Seeded {len(student_ids)} students.")
+
+    professor_ids = seed_professors(conn, department_ids, n=50)
+    print(f"Seeded {len(professor_ids)} professors.")
+
+    course_ids = seed_courses(conn, department_ids, n_per_department=20)
+    print(f"Seeded {len(course_ids)} courses.")
+
+    enrollment_ids = seed_enrollments(conn, student_ids, course_ids)
+    print(f"Seeded {len(enrollment_ids)} enrollments.")
+
+    seed_submissions(conn, enrollment_ids)
+    print("Seeded submissions.")
+
+    seed_professor_has_office_hours(conn, professor_ids, office_hour_ids, room_ids)
+    print("Seeded professor office hours.")
+
+    seed_professor_teaches_course(conn, professor_ids, course_ids)
+    print("Seeded professor teaches course.")
+
+    seed_class_sessions(conn, office_hour_ids, room_ids)
+    print("Seeded class sessions.")
+
+    seed_course_has_prerequisites(conn, course_ids)
+    print("Seeded course prerequisites.")
+
     conn.commit()
     conn.close()
+    print("Done. competition.db is ready.")
