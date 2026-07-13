@@ -1,6 +1,10 @@
 import sqlite3
-import faker as fake
+from faker import Faker
 import random
+
+
+# Faker
+fake = Faker('de_DE')
 
 
 # SEEDING ROOMS
@@ -85,12 +89,202 @@ def seed_departments(conn, room_ids: list[int]) -> list[int]:
 
     return [d[0] for d in departments]
 
+
+# SEEDING STUDENTS
+def seed_students(conn, department_ids: list[int], n=500) -> list[int]:
+    students = []
+    for i in range(1, n + 1):
+        birth_date = fake.date_of_birth(minimum_age=18, maximum_age=35)
+        enrollment_date = fake.date_between(start_date='-6y', end_date='today')
+        first_name = fake.first_name()
+        last_name = fake.last_name()
+        email = f"{first_name.lower()}.{last_name.lower()}{random.randint(1,99)}@stud.tu-darmstadt.de"
+
+        students.append((
+            i,
+            first_name,
+            last_name,
+            email,
+            enrollment_date.strftime('%Y-%m-%d'),
+            birth_date.strftime('%Y-%m-%d'),
+            random.choice(department_ids)
+        ))
+
+    conn.executemany(
+        "INSERT INTO student (student_id, first_name, last_name, email, enrollment_date, birth_date, department_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        students
+    )
+
+    return [s[0] for s in students]
+
+
+# SEEDING PROFESSORS
+def seed_professors(conn, department_ids: list[int], n=50) -> list[int]:
+    professors = []
+    for i in range(1, n + 1):
+        first_name = fake.first_name()
+        last_name = fake.last_name()
+        email = f"{first_name.lower()}.{last_name.lower()}@tu-darmstadt.de"
+        hire_date = fake.date_between(start_date='-30y', end_date='-1y')
+
+        professors.append((
+            i,
+            hire_date.strftime('%Y-%m-%d'),
+            email,
+            first_name,
+            last_name,
+            random.choice(department_ids)
+        ))
+
+    conn.executemany(
+        "INSERT INTO professor (professor_id, hire_date, email, first_name, last_name, department_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        professors
+    )
+
+    return [p[0] for p in professors]
+
+
+# SEEDING COURSES
+def seed_courses(conn, department_ids: list[int], n_per_department=20) -> list[int]:
+    prefixes = [
+        "Introduction to", "Advanced", "Fundamentals of", "Applied",
+        "Theoretical", "Practical", "Seminar:", "Topics in"
+    ]
+    topics = [
+        "Algorithms", "Database Systems", "Machine Learning", "Linear Algebra",
+        "Statistics", "Software Engineering", "Computer Networks", "Calculus",
+        "Data Structures", "Operating Systems", "Artificial Intelligence",
+        "Discrete Mathematics", "Programming Paradigms", "Cryptography",
+        "Signal Processing", "Quantum Computing", "Numerical Methods",
+        "Computer Architecture", "Distributed Systems", "Graph Theory"
+    ]
+    levels = ['Bachelor', 'Bachelor', 'Bachelor', 'Master', 'Master', 'Doctorate']
+
+    courses = []
+    i = 1
+    for dept_id in department_ids:
+        for _ in range(n_per_department):
+            title = f"{random.choice(prefixes)} {random.choice(topics)}"
+            courses.append((
+                i,
+                title,
+                random.choice(levels),
+                random.randint(4, 15),
+                dept_id
+            ))
+            i += 1
+
+    conn.executemany(
+        "INSERT INTO course (course_id, title, level, credits, department_id) VALUES (?, ?, ?, ?, ?)",
+        courses
+    )
+
+    return [c[0] for c in courses]
+
+
+# SEEDING ENROLLMENTS
+def seed_enrollments(conn, student_ids: list[int], course_ids: list[int]) -> list[int]:
+    semesters = [
+        'WS2020/21', 'SS2021', 'WS2021/22', 'SS2022',
+        'WS2022/23', 'SS2023', 'WS2023/24', 'SS2024'
+    ]
+    grades = [1.0, 1.3, 1.7, 2.0, 2.3, 2.7, 3.0, 3.3, 3.7, 4.0, 5.0]
+
+    enrollments = []
+    seen = set()
+    i = 1
+
+    for student_id in student_ids:
+        n_enrollments = random.randint(5, 10)
+        attempts = 0
+        added = 0
+
+        while added < n_enrollments and attempts < 50:
+            course_id = random.choice(course_ids)
+            semester = random.choice(semesters)
+            key = (student_id, course_id, semester)
+
+            if key not in seen:
+                seen.add(key)
+                grade = random.choice(grades) if random.random() > 0.1 else None
+                enrollments.append((i, semester, grade, student_id, course_id))
+                i += 1
+                added += 1
+
+            attempts += 1
+
+    conn.executemany(
+        "INSERT INTO enrollment (enrollment_id, semester, grade, student_id, course_id) VALUES (?, ?, ?, ?, ?)",
+        enrollments
+    )
+
+    return [e[0] for e in enrollments]
+
+
+# SEEDING SUBMISSIONS
+def seed_submissions(conn, enrollment_ids: list[int]) -> None:
+    submission_types = [
+        'draft_paper', 'exposé', 'calculation_task',
+        'programming_task', 'literature_review', 'presentation'
+    ]
+    grades = [1.0, 1.3, 1.7, 2.0, 2.3, 2.7, 3.0, 3.3, 3.7, 4.0, 5.0]
+
+    submissions = []
+
+    for enrollment_id in enrollment_ids:
+        if random.random() > 0.4:  # 60% chance of having submissions
+            n_submissions = random.randint(1, 3)
+            for submission_id in range(1, n_submissions + 1):
+                grade = random.choice(grades) if random.random() > 0.1 else None
+                feedback = fake.sentence(nb_words=10) if random.random() > 0.4 else None
+                submitted_at = fake.date_between(start_date='-4y', end_date='today').strftime('%Y-%m-%d')
+
+                submissions.append((
+                    enrollment_id,
+                    submission_id,
+                    grade,
+                    submitted_at,
+                    random.choice(submission_types),
+                    feedback
+                ))
+
+    conn.executemany(
+        "INSERT INTO submission (enrollment_id, submission_id, grade, submitted_at, submission_type, feedback) VALUES (?, ?, ?, ?, ?, ?)",
+        submissions
+    )
+
+
+# SEEDING PROFESSOR OFFICE HOURS
+def seed_professor_has_office_hours(conn, professor_ids: list[int], office_hour_ids: list[int], room_ids: list[int]) -> None:
+    assignments = []
+    seen = set()
+
+    for professor_id in professor_ids:
+        n_office_hours = random.randint(1, 3)
+        available = [oh for oh in office_hour_ids if (professor_id, oh) not in seen]
+        chosen = random.sample(available, min(n_office_hours, len(available)))
+
+        for office_hour_id in chosen:
+            seen.add((professor_id, office_hour_id))
+            assignments.append((
+                professor_id,
+                office_hour_id,
+                random.choice(room_ids)
+            ))
+
+    conn.executemany(
+        "INSERT INTO professor_has_office_hours (professor_id, office_hour_id, room_id) VALUES (?, ?, ?)",
+        assignments
+    )
+
 # then at the bottom:
 if __name__ == "__main__":
     conn = sqlite3.connect("competition.db")
     conn.execute("PRAGMA foreign_keys = ON")
     
     room_ids = seed_rooms(conn)
+    office_hour_ids = seed_office_hours(conn)
+    department_ids = seed_departments(conn, room_ids)
     
     conn.commit()
     conn.close()

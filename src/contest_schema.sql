@@ -39,7 +39,8 @@ CREATE TABLE department (
 
 CREATE TABLE student (
     student_id      INTEGER PRIMARY KEY,
-    name            TEXT NOT NULL,
+    first_name      TEXT NOT NULL,
+    last_name       TEXT NOT NULL,
     email           TEXT NOT NULL,
     enrollment_date TEXT NOT NULL,
     birth_date      TEXT NOT NULL,
@@ -51,7 +52,17 @@ CREATE TABLE professor (
     professor_id  INTEGER PRIMARY KEY,
     hire_date     TEXT NOT NULL,
     email         TEXT NOT NULL,
-    name          TEXT NOT NULL,
+    first_name    TEXT NOT NULL,
+    last_name     TEXT NOT NULL,
+    department_id INTEGER NOT NULL,
+    FOREIGN KEY (department_id) REFERENCES department(department_id)
+);
+
+CREATE TABLE course (
+    course_id     INTEGER PRIMARY KEY,
+    title         TEXT NOT NULL,
+    level         TEXT NOT NULL,
+    credits       INTEGER NOT NULL,
     department_id INTEGER NOT NULL,
     FOREIGN KEY (department_id) REFERENCES department(department_id)
 );
@@ -61,24 +72,15 @@ CREATE TABLE enrollment (
     semester      TEXT NOT NULL,
     grade         REAL,
     student_id    INTEGER NOT NULL,
-    FOREIGN KEY (student_id) REFERENCES student(student_id)
-);
-
-CREATE TABLE course (
-    course_id     INTEGER PRIMARY KEY,
-    title         TEXT NOT NULL,
-    level         TEXT NOT NULL,
-    credits       INTEGER NOT NULL,
-    enrollment_id INTEGER NOT NULL,
-    department_id INTEGER NOT NULL,
-    FOREIGN KEY (enrollment_id) REFERENCES enrollment(enrollment_id),
-    FOREIGN KEY (department_id) REFERENCES department(department_id)
+    course_id     INTEGER NOT NULL,
+    FOREIGN KEY (student_id) REFERENCES student(student_id),
+    FOREIGN KEY (course_id) REFERENCES course(course_id)
 );
 
 CREATE TABLE submission (
     enrollment_id   INTEGER NOT NULL,
     submission_id   INTEGER NOT NULL,
-    score           REAL,
+    grade           REAL,
     submitted_at    TEXT NOT NULL,
     submission_type TEXT NOT NULL,
     feedback        TEXT,
@@ -86,16 +88,13 @@ CREATE TABLE submission (
     FOREIGN KEY (enrollment_id) REFERENCES enrollment(enrollment_id)
 );
 
-
 CREATE TABLE professor_has_office_hours (
-    professor_id INTEGER NOT NULL,
-    day_of_week  TEXT NOT NULL,
-    start_time   TEXT NOT NULL,
-    end_time     TEXT NOT NULL,
-    room_id      INTEGER NOT NULL,
-    PRIMARY KEY (professor_id, day_of_week, start_time, end_time),
+    professor_id   INTEGER NOT NULL,
+    office_hour_id INTEGER NOT NULL,
+    room_id        INTEGER NOT NULL,
+    PRIMARY KEY (professor_id, office_hour_id),
     FOREIGN KEY (professor_id) REFERENCES professor(professor_id),
-    FOREIGN KEY (day_of_week, start_time, end_time) REFERENCES office_hours(day_of_week, start_time, end_time),
+    FOREIGN KEY (office_hour_id) REFERENCES office_hours(office_hour_id),
     FOREIGN KEY (room_id) REFERENCES room(room_id)
 );
 
